@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const MOCK_CLASSES = [
   {
@@ -170,11 +171,12 @@ export default function Classes() {
                 </div>
 
                 {/* Action Button */}
-                {user?.role === 'student' && (
-                  <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition">
-                    Enroll Now
-                  </button>
-                )}
+                <a
+                  href={`/classes/${cls.id}`}
+                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition text-center"
+                >
+                  View Details
+                </a>
               </div>
             </div>
           ))}

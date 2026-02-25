@@ -79,10 +79,10 @@ export default function Home() {
               {user?.role === 'student' ? 'My Classes' : 'Instructors'}
             </h3>
             <p className="text-gray-600 text-sm mb-4">
-              {user?.role === 'student' ? 'View your enrolled classes' : 'Manage instructor profiles'}
+              {user?.role === 'student' ? 'View your enrolled classes' : 'Meet our instructors'}
             </p>
             <a href="/instructors" className="text-purple-600 font-semibold hover:text-purple-700">
-              View More →
+              View Instructors →
             </a>
           </div>
 

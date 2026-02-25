@@ -5,6 +5,9 @@ import Navigation from './components/Navigation';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Classes from './pages/Classes';
+import ClassDetail from './pages/ClassDetail';
+import Instructors from './pages/Instructors';
+import InstructorDetail from './pages/InstructorDetail';
 import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }) {
@@ -52,6 +55,30 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Classes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/classes/:id"
+        element={
+          <ProtectedRoute>
+            <ClassDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/instructors"
+        element={
+          <ProtectedRoute>
+            <Instructors />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/instructors/:id"
+        element={
+          <ProtectedRoute>
+            <InstructorDetail />
           </ProtectedRoute>
         }
       />
