@@ -1,38 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getInstructors, updateInstructor, getClasses } from '../data/store';
-import { FormField, Input, Select, Textarea } from '../components/FormField';
+import { getStudents, updateStudent, getClasses } from '../data/store';
+import { FormField, Input, Select } from '../components/FormField';
 
-const STYLES = ['Ballet', 'Contemporary', 'Hip-Hop', 'Jazz', 'Salsa', 'Tap', 'Ballroom', 'Other'];
-const LEVELS = ['Instructor', 'Senior Instructor', 'Lead Instructor', 'Guest Instructor'];
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 
-export default function InstructorDetail() {
+export default function StudentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [instructor, setInstructor] = useState(null);
+  const [student, setStudent] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [allClasses, setAllClasses] = useState([]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [saved, setSaved] = useState(false);
-  const canManage = user?.role === 'admin';
+  const canManage = user?.role === 'admin' || user?.role === 'instructor';
 
   useEffect(() => {
-    const found = getInstructors().find(i => i.id === id);
+    const found = getStudents().find(s => s.id === id);
     if (!found) return;
-    setInstructor(found);
+    setStudent(found);
     setForm(found);
-    setClasses(getClasses().filter(c => c.instructorId === id));
+    const all = getClasses();
+    setAllClasses(all);
+    setClasses(all.filter(c => found.enrolledClasses?.includes(c.id)));
   }, [id]);
 
-  if (!instructor) {
+  if (!student) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-zinc-500 text-lg mb-4">Instructor not found</p>
-          <button onClick={() => navigate('/instructors')} className="text-yellow-400 font-bold hover:text-yellow-300 transition">
-            ← Back to Instructors
+          <p className="text-zinc-500 text-lg mb-4">Student not found</p>
+          <button onClick={() => navigate('/students')} className="text-yellow-400 font-bold hover:text-yellow-300 transition">
+            ← Back to Students
           </button>
         </div>
       </div>
@@ -41,8 +43,10 @@ export default function InstructorDetail() {
 
   const handleSave = (e) => {
     e.preventDefault();
-    updateInstructor(id, form);
-    setInstructor({ ...instructor, ...form });
+    updateStudent(id, form);
+    setStudent({ ...student, ...form });
+    const all = getClasses();
+    setClasses(all.filter(c => (form.enrolledClasses || []).includes(c.id)));
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -51,13 +55,13 @@ export default function InstructorDetail() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <button onClick={() => navigate('/instructors')} className="text-zinc-500 hover:text-yellow-400 text-xs font-bold tracking-widest uppercase mb-6 transition">
-          ← Back to Instructors
+        <button onClick={() => navigate('/students')} className="text-zinc-500 hover:text-yellow-400 text-xs font-bold tracking-widest uppercase mb-6 transition">
+          ← Back to Students
         </button>
 
         {saved && (
           <div className="bg-green-900/40 border border-green-700 text-green-300 text-sm px-4 py-3 rounded-lg mb-6">
-            Instructor profile updated successfully!
+            Student profile updated successfully!
           </div>
         )}
 
@@ -72,27 +76,23 @@ export default function InstructorDetail() {
                     <FormField label="Full Name *">
                       <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
                     </FormField>
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField label="Dance Style *">
-                        <Select value={form.style} onChange={e => setForm({ ...form, style: e.target.value })}>
-                          {STYLES.map(s => <option key={s}>{s}</option>)}
-                        </Select>
-                      </FormField>
-                      <FormField label="Level">
-                        <Select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}>
-                          {LEVELS.map(l => <option key={l}>{l}</option>)}
-                        </Select>
-                      </FormField>
-                    </div>
                     <FormField label="Email *">
                       <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
                     </FormField>
                     <FormField label="Phone">
                       <Input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                     </FormField>
-                    <FormField label="Bio">
-                      <Textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={4} />
-                    </FormField>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Level">
+                        <Select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}>
+                          <option value="">Select level</option>
+                          {LEVELS.map(l => <option key={l}>{l}</option>)}
+                        </Select>
+                      </FormField>
+                      <FormField label="Join Date">
+                        <Input type="date" value={form.joinDate} onChange={e => setForm({ ...form, joinDate: e.target.value })} />
+                      </FormField>
+                    </div>
                     <div className="flex gap-3">
                       <button type="button" onClick={() => setEditing(false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
                         Cancel
@@ -106,12 +106,12 @@ export default function InstructorDetail() {
                   <>
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-black font-black text-2xl">
-                          {instructor.name.charAt(0)}
+                        <div className="w-16 h-16 bg-zinc-700 rounded-full flex items-center justify-center text-white font-black text-2xl">
+                          {student.name.charAt(0)}
                         </div>
                         <div>
-                          <h1 className="text-3xl font-black tracking-tight">{instructor.name}</h1>
-                          <p className="text-zinc-500 mt-1">{instructor.level} · {instructor.style}</p>
+                          <h1 className="text-3xl font-black tracking-tight">{student.name}</h1>
+                          <p className="text-zinc-500 mt-1">{student.level || 'No level set'}</p>
                         </div>
                       </div>
                       {canManage && (
@@ -123,31 +123,32 @@ export default function InstructorDetail() {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-4 mb-6 py-4 border-y border-zinc-800">
+                    <div className="grid grid-cols-3 gap-4 py-4 border-y border-zinc-800 mb-6">
                       <div className="text-center">
-                        <p className="text-white font-black text-2xl">{instructor.classes}</p>
+                        <p className="text-white font-black text-2xl">{classes.length}</p>
                         <p className="text-zinc-500 text-xs mt-1">Classes</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-white font-black text-2xl">{instructor.students}</p>
-                        <p className="text-zinc-500 text-xs mt-1">Students</p>
+                        <p className={`font-black text-2xl ${student.attendance >= 90 ? 'text-green-400' : student.attendance >= 75 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {student.attendance}%
+                        </p>
+                        <p className="text-zinc-500 text-xs mt-1">Attendance</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-yellow-400 font-black text-2xl">★{instructor.rating}</p>
-                        <p className="text-zinc-500 text-xs mt-1">Rating</p>
+                        <p className="text-white font-black text-2xl">{student.joinDate?.split('-')[0] || '—'}</p>
+                        <p className="text-zinc-500 text-xs mt-1">Year Joined</p>
                       </div>
                     </div>
-                    <p className="text-zinc-400 leading-relaxed">{instructor.bio}</p>
                   </>
                 )}
               </div>
             </div>
 
-            {/* Classes taught */}
+            {/* Enrolled classes */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-              <h2 className="text-white font-black tracking-wide uppercase mb-5">Classes Taught ({classes.length})</h2>
+              <h2 className="text-white font-black tracking-wide uppercase mb-5">Enrolled Classes ({classes.length})</h2>
               {classes.length === 0 ? (
-                <p className="text-zinc-600 text-sm">No classes assigned yet</p>
+                <p className="text-zinc-600 text-sm">Not enrolled in any classes</p>
               ) : (
                 <div className="space-y-3">
                   {classes.map(cls => (
@@ -158,11 +159,11 @@ export default function InstructorDetail() {
                     >
                       <div>
                         <p className="text-white font-semibold text-sm">{cls.name}</p>
-                        <p className="text-zinc-500 text-xs">{cls.day} · {cls.time} · {cls.duration} min</p>
+                        <p className="text-zinc-500 text-xs">{cls.day} · {cls.time}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded-full">{cls.level}</span>
-                        <p className="text-xs text-zinc-500 mt-1">{cls.enrolled}/{cls.capacity} enrolled</p>
+                        <span className="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded-full">{cls.style}</span>
+                        <p className="text-xs text-zinc-500 mt-1">${cls.price}/class</p>
                       </div>
                     </Link>
                   ))}
@@ -176,10 +177,10 @@ export default function InstructorDetail() {
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
               <h3 className="text-white font-black tracking-wide uppercase text-sm">Contact</h3>
               {[
-                { label: 'Email', value: instructor.email },
-                { label: 'Phone', value: instructor.phone || '—' },
-                { label: 'Specialty', value: instructor.style },
-                { label: 'Level', value: instructor.level },
+                { label: 'Email', value: student.email },
+                { label: 'Phone', value: student.phone || '—' },
+                { label: 'Level', value: student.level || '—' },
+                { label: 'Joined', value: student.joinDate || '—' },
               ].map(({ label, value }) => (
                 <div key={label} className="py-2 border-b border-zinc-800 last:border-0">
                   <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">{label}</p>

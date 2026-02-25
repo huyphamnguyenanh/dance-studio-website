@@ -11,77 +11,50 @@ export default function Profile() {
     navigate('/login');
   };
 
+  const roleColors = {
+    admin: 'bg-yellow-400/10 text-yellow-400',
+    instructor: 'bg-blue-900/50 text-blue-400',
+    student: 'bg-green-900/50 text-green-400',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        </div>
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-3xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-black tracking-tight mb-8">PROFILE</h1>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* User Info Card */}
-        <div className="bg-white rounded-lg shadow p-8 mb-8">
-          {/* Avatar */}
-          <div className="flex items-center gap-6 mb-8">
-            <div className="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-4xl text-white font-bold">
-                {user?.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
-              <p className="text-gray-600 capitalize">{user?.role}</p>
-            </div>
-          </div>
-
-          {/* User Details */}
-          <div className="space-y-4 mb-8">
-            <div className="border-b border-gray-200 pb-4">
-              <p className="text-sm text-gray-600 mb-1">Email</p>
-              <p className="text-lg font-semibold text-gray-900">{user?.email}</p>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden mb-6">
+          <div className="h-1.5 bg-yellow-400" />
+          <div className="p-8">
+            <div className="flex items-center gap-5 mb-8">
+              <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-black font-black text-2xl">
+                {user?.name?.charAt(0)}
+              </div>
+              <div>
+                <h2 className="text-2xl font-black">{user?.name}</h2>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full capitalize mt-1 inline-block ${roleColors[user?.role] || 'bg-zinc-800 text-zinc-400'}`}>
+                  {user?.role}
+                </span>
+              </div>
             </div>
 
-            <div className="border-b border-gray-200 pb-4">
-              <p className="text-sm text-gray-600 mb-1">Account Type</p>
-              <p className="text-lg font-semibold text-gray-900 capitalize">{user?.role}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-600 mb-1">User ID</p>
-              <p className="text-lg font-semibold text-gray-900">{user?.id}</p>
+            <div className="space-y-0">
+              {[
+                { label: 'Email', value: user?.email },
+                { label: 'Role', value: user?.role },
+                { label: 'Account Status', value: 'Active' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between items-center py-4 border-b border-zinc-800 last:border-0">
+                  <span className="text-zinc-500 text-xs uppercase tracking-widest">{label}</span>
+                  <span className="text-white font-semibold text-sm capitalize">{value}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Settings Section */}
-        <div className="bg-white rounded-lg shadow p-8 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Settings</h3>
-          
-          <div className="space-y-4">
-            <button className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              <p className="font-semibold text-gray-900">Preferences</p>
-              <p className="text-sm text-gray-600">Manage your preferences</p>
-            </button>
-
-            <button className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              <p className="font-semibold text-gray-900">Notifications</p>
-              <p className="text-sm text-gray-600">Manage notification settings</p>
-            </button>
-
-            <button className="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              <p className="font-semibold text-gray-900">Help & Support</p>
-              <p className="text-sm text-gray-600">Get help and support</p>
-            </button>
-          </div>
-        </div>
-
-        {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition"
+          className="w-full bg-red-950/50 hover:bg-red-950 border border-red-900 text-red-400 font-black tracking-widest uppercase py-3 rounded-lg transition text-sm"
         >
           Sign Out
         </button>

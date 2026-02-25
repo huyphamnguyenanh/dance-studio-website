@@ -8,90 +8,47 @@ import Classes from './pages/Classes';
 import ClassDetail from './pages/ClassDetail';
 import Instructors from './pages/Instructors';
 import InstructorDetail from './pages/InstructorDetail';
+import Students from './pages/Students';
+import StudentDetail from './pages/StudentDetail';
 import Profile from './pages/Profile';
 
-function ProtectedRoute({ children }) {
-  const { user, isLoading } = useAuth();
+function ProtectedRoute({ children, roles }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  return children;
+}
 
-  if (isLoading) {
+function AppLayout() {
+  const { user } = useAuth();
+
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
   return (
-    <>
+    <div className="bg-black min-h-screen">
       <Navigation />
-      {children}
-    </>
-  );
-}
-
-function AppContent() {
-  const { user } = useAuth();
-
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/classes"
-        element={
-          <ProtectedRoute>
-            <Classes />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/classes/:id"
-        element={
-          <ProtectedRoute>
-            <ClassDetail />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/instructors"
-        element={
-          <ProtectedRoute>
-            <Instructors />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/instructors/:id"
-        element={
-          <ProtectedRoute>
-            <InstructorDetail />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+          <Route path="/classes/:id" element={<ProtectedRoute><ClassDetail /></ProtectedRoute>} />
+          <Route path="/instructors" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
+          <Route path="/instructors/:id" element={<ProtectedRoute><InstructorDetail /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute roles={['admin', 'instructor']}><Students /></ProtectedRoute>} />
+          <Route path="/students/:id" element={<ProtectedRoute roles={['admin', 'instructor']}><StudentDetail /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </div>
   );
 }
 
@@ -99,7 +56,7 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <AppLayout />
       </AuthProvider>
     </Router>
   );

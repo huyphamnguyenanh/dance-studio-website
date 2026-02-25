@@ -1,273 +1,239 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getClasses, updateClass, getInstructors, getStudents } from '../data/store';
+import { FormField, Input, Select, Textarea } from '../components/FormField';
 
-const MOCK_CLASSES = [
-  {
-    id: '1',
-    name: 'Ballet Basics',
-    instructor: 'Sarah Johnson',
-    style: 'Ballet',
-    level: 'Beginner',
-    time: 'Mon 10:00 AM',
-    capacity: 20,
-    enrolled: 18,
-    color: 'bg-blue-500',
-    description: 'Learn the fundamentals of classical ballet. Perfect for beginners with no prior dance experience.',
-    schedule: 'Every Monday at 10:00 AM',
-    duration: '60 minutes',
-    price: '$20/class or $80/month',
-    instructorBio: 'Sarah Johnson is a professional ballet dancer with 15 years of experience. She trained at the Royal Academy of Dance.'
-  },
-  {
-    id: '2',
-    name: 'Contemporary Flow',
-    instructor: 'Michael Chen',
-    style: 'Contemporary',
-    level: 'Intermediate',
-    time: 'Tue 6:00 PM',
-    capacity: 25,
-    enrolled: 22,
-    color: 'bg-purple-500',
-    description: 'Explore modern movement and expression through contemporary dance techniques.',
-    schedule: 'Every Tuesday at 6:00 PM',
-    duration: '75 minutes',
-    price: '$25/class or $100/month',
-    instructorBio: 'Michael Chen is a contemporary dance choreographer and performer. He has performed internationally and teaches movement innovation.'
-  },
-  {
-    id: '3',
-    name: 'Hip-Hop Vibes',
-    instructor: 'Alex Rodriguez',
-    style: 'Hip-Hop',
-    level: 'Beginner',
-    time: 'Wed 7:00 PM',
-    capacity: 30,
-    enrolled: 28,
-    color: 'bg-red-500',
-    description: 'High-energy hip-hop dance class. Learn cool moves and have fun with current music.',
-    schedule: 'Every Wednesday at 7:00 PM',
-    duration: '60 minutes',
-    price: '$20/class or $80/month',
-    instructorBio: 'Alex Rodriguez is a hip-hop dancer and choreographer with a passion for street dance culture and freestyle movement.'
-  },
-  {
-    id: '4',
-    name: 'Jazz Essentials',
-    instructor: 'Emma Wilson',
-    style: 'Jazz',
-    level: 'Intermediate',
-    time: 'Thu 5:30 PM',
-    capacity: 20,
-    enrolled: 15,
-    color: 'bg-yellow-500',
-    description: 'Master the smooth, rhythmic movements of jazz dance with emphasis on style and technique.',
-    schedule: 'Every Thursday at 5:30 PM',
-    duration: '60 minutes',
-    price: '$22/class or $90/month',
-    instructorBio: 'Emma Wilson is a jazz dance specialist with Broadway experience. She brings theatrical flair to every class.'
-  },
-  {
-    id: '5',
-    name: 'Salsa Night',
-    instructor: 'Carlos Martinez',
-    style: 'Salsa',
-    level: 'All Levels',
-    time: 'Fri 8:00 PM',
-    capacity: 35,
-    enrolled: 32,
-    color: 'bg-pink-500',
-    description: 'Join us for an exciting salsa night! Learn partner dancing and Latin rhythms in a fun, social atmosphere.',
-    schedule: 'Every Friday at 8:00 PM',
-    duration: '90 minutes',
-    price: '$25/class or $100/month',
-    instructorBio: 'Carlos Martinez is a professional salsa dancer and instructor. He specializes in partner dancing and Latin music interpretation.'
-  }
-];
+const STYLES = ['Ballet', 'Contemporary', 'Hip-Hop', 'Jazz', 'Salsa', 'Tap', 'Ballroom', 'Other'];
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function ClassDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [cls, setCls] = useState(null);
+  const [instructors, setInstructors] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({});
+  const [saved, setSaved] = useState(false);
+  const canManage = user?.role === 'admin' || user?.role === 'instructor';
 
-  const classData = MOCK_CLASSES.find(cls => cls.id === id);
+  useEffect(() => {
+    const found = getClasses().find(c => c.id === id);
+    if (!found) return;
+    setCls(found);
+    setForm(found);
+    setInstructors(getInstructors());
+    setStudents(getStudents().filter(s => s.enrolledClasses?.includes(id)));
+  }, [id]);
 
-  if (!classData) {
+  if (!cls) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Class Not Found</h1>
-            <p className="text-gray-600 mb-8">The class you're looking for doesn't exist.</p>
-            <button
-              onClick={() => navigate('/classes')}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition"
-            >
-              Back to Classes
-            </button>
-          </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-zinc-500 text-lg mb-4">Class not found</p>
+          <button onClick={() => navigate('/classes')} className="text-yellow-400 font-bold hover:text-yellow-300 transition">
+            ← Back to Classes
+          </button>
         </div>
       </div>
     );
   }
 
+  const instructor = instructors.find(i => i.id === cls.instructorId);
+  const pct = Math.round((cls.enrolled / cls.capacity) * 100);
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    updateClass(id, { ...form, capacity: Number(form.capacity), price: Number(form.price), duration: Number(form.duration) });
+    const updated = getClasses().find(c => c.id === id);
+    setCls(updated);
+    setEditing(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <button
-            onClick={() => navigate('/classes')}
-            className="text-purple-600 hover:text-purple-700 font-semibold mb-4"
-          >
-            ← Back to Classes
-          </button>
-          <h1 className="text-4xl font-bold text-gray-900">{classData.name}</h1>
-          <p className="text-gray-600 mt-2">Instructor: {classData.instructor}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        {/* Breadcrumb */}
+        <button onClick={() => navigate('/classes')} className="text-zinc-500 hover:text-yellow-400 text-xs font-bold tracking-widest uppercase mb-6 transition">
+          ← Back to Classes
+        </button>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {saved && (
+          <div className="bg-green-900/40 border border-green-700 text-green-300 text-sm px-4 py-3 rounded-lg mb-6">
+            Class updated successfully!
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Class Header Card */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <div className="flex items-start gap-6 mb-6">
-                <div className={`${classData.color} w-20 h-20 rounded-lg flex items-center justify-center text-white text-3xl font-bold`}>
-                  {classData.style.charAt(0)}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{classData.name}</h2>
-                  <div className="flex gap-3">
-                    <span className="inline-block bg-purple-100 text-purple-700 text-sm font-semibold px-3 py-1 rounded-full">
-                      {classData.level}
-                    </span>
-                    <span className="inline-block bg-yellow-100 text-yellow-700 text-sm font-semibold px-3 py-1 rounded-full">
-                      {classData.style}
-                    </span>
-                  </div>
-                </div>
+          {/* Main */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Header card */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="h-1.5 bg-yellow-400" />
+              <div className="p-8">
+                {editing ? (
+                  <form onSubmit={handleSave} className="space-y-4">
+                    <FormField label="Class Name *">
+                      <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                    </FormField>
+                    <FormField label="Instructor">
+                      <Select value={form.instructorId} onChange={e => setForm({ ...form, instructorId: e.target.value })}>
+                        <option value="">Select instructor</option>
+                        {instructors.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                      </Select>
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Style *">
+                        <Select value={form.style} onChange={e => setForm({ ...form, style: e.target.value })}>
+                          {STYLES.map(s => <option key={s}>{s}</option>)}
+                        </Select>
+                      </FormField>
+                      <FormField label="Level *">
+                        <Select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}>
+                          {LEVELS.map(l => <option key={l}>{l}</option>)}
+                        </Select>
+                      </FormField>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField label="Day *">
+                        <Select value={form.day} onChange={e => setForm({ ...form, day: e.target.value })}>
+                          {DAYS.map(d => <option key={d}>{d}</option>)}
+                        </Select>
+                      </FormField>
+                      <FormField label="Time *">
+                        <Input type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} />
+                      </FormField>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField label="Duration (min)">
+                        <Input type="number" min="30" value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} />
+                      </FormField>
+                      <FormField label="Capacity">
+                        <Input type="number" min="1" value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} />
+                      </FormField>
+                      <FormField label="Price ($)">
+                        <Input type="number" min="0" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                      </FormField>
+                    </div>
+                    <FormField label="Description">
+                      <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                    </FormField>
+                    <div className="flex gap-3">
+                      <button type="button" onClick={() => setEditing(false)} className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
+                        Cancel
+                      </button>
+                      <button type="submit" className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-black font-black tracking-widest uppercase py-2.5 rounded-lg transition text-sm">
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h1 className="text-3xl font-black tracking-tight">{cls.name}</h1>
+                        <p className="text-zinc-500 mt-1">{instructor?.name || 'Instructor TBD'}</p>
+                      </div>
+                      {canManage && (
+                        <button
+                          onClick={() => setEditing(true)}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="text-xs text-zinc-400 bg-zinc-800 px-3 py-1 rounded-full">{cls.style}</span>
+                      <span className="text-xs text-zinc-400 bg-zinc-800 px-3 py-1 rounded-full">{cls.level}</span>
+                      <span className="text-xs text-zinc-400 bg-zinc-800 px-3 py-1 rounded-full">{cls.day} · {cls.time}</span>
+                      <span className="text-xs text-zinc-400 bg-zinc-800 px-3 py-1 rounded-full">{cls.duration} min</span>
+                    </div>
+                    <p className="text-zinc-400 leading-relaxed">{cls.description}</p>
+                  </>
+                )}
               </div>
-
-              <p className="text-gray-700 text-lg leading-relaxed">{classData.description}</p>
             </div>
 
-            {/* Class Details */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Class Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Schedule</p>
-                  <p className="text-lg font-semibold text-gray-900">{classData.schedule}</p>
+            {/* Enrolled students */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              <h2 className="text-white font-black tracking-wide uppercase mb-5">Enrolled Students ({students.length})</h2>
+              {students.length === 0 ? (
+                <p className="text-zinc-600 text-sm">No students enrolled yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {students.map(s => (
+                    <div key={s.id} className="flex items-center justify-between py-3 border-b border-zinc-800 last:border-0">
+                      <div>
+                        <p className="text-white font-semibold text-sm">{s.name}</p>
+                        <p className="text-zinc-500 text-xs">{s.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded-full">{s.level}</span>
+                        <p className="text-xs text-green-400 mt-1">{s.attendance}% attendance</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Duration</p>
-                  <p className="text-lg font-semibold text-gray-900">{classData.duration}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Price</p>
-                  <p className="text-lg font-semibold text-gray-900">{classData.price}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Class Time</p>
-                  <p className="text-lg font-semibold text-gray-900">{classData.time}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Instructor Info */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">About the Instructor</h3>
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {classData.instructor.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">{classData.instructor}</h4>
-                  <p className="text-gray-700 leading-relaxed">{classData.instructorBio}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Enrollment Info */}
-            <div className="bg-white rounded-lg shadow p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Enrollment Status</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Spots Available</span>
-                    <span className="text-gray-900 font-semibold">
-                      {classData.capacity - classData.enrolled} of {classData.capacity}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className="bg-green-500 h-3 rounded-full"
-                      style={{ width: `${(classData.enrolled / classData.capacity) * 100}%` }}
-                    />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {classData.capacity - classData.enrolled === 0
-                    ? 'This class is full. Join the waitlist?'
-                    : `${classData.capacity - classData.enrolled} spots remaining`}
-                </p>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            {/* Quick Info Card */}
-            <div className="bg-white rounded-lg shadow p-6 sticky top-4 space-y-4">
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">Instructor</p>
-                <p className="text-lg font-semibold text-gray-900">{classData.instructor}</p>
+          <div className="space-y-5">
+            {/* Quick info */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+              <h3 className="text-white font-black tracking-wide uppercase text-sm mb-4">Class Info</h3>
+              {[
+                { label: 'Price', value: `$${cls.price}/class` },
+                { label: 'Duration', value: `${cls.duration} minutes` },
+                { label: 'Day', value: cls.day },
+                { label: 'Time', value: cls.time },
+                { label: 'Capacity', value: `${cls.enrolled}/${cls.capacity}` },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
+                  <span className="text-zinc-500 text-xs uppercase tracking-wider">{label}</span>
+                  <span className="text-white font-semibold text-sm">{value}</span>
+                </div>
+              ))}
+              {/* Enrollment bar */}
+              <div>
+                <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+                  <span>Enrollment</span>
+                  <span>{pct}%</span>
+                </div>
+                <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${pct >= 100 ? 'bg-red-500' : 'bg-yellow-400'}`} style={{ width: `${pct}%` }} />
+                </div>
               </div>
-
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">Level</p>
-                <p className="text-lg font-semibold text-gray-900">{classData.level}</p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">Time</p>
-                <p className="text-lg font-semibold text-gray-900">{classData.time}</p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">Capacity</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {classData.enrolled}/{classData.capacity}
-                </p>
-              </div>
-
-              {/* Action Button */}
               {user?.role === 'student' && (
-                <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition mt-4">
+                <button className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black tracking-widest uppercase py-3 rounded-lg transition text-sm mt-2">
                   Enroll Now
                 </button>
               )}
-
-              {user?.role === 'instructor' && (
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition mt-4">
-                  View Roster
-                </button>
-              )}
-
-              {user?.role === 'admin' && (
-                <div className="space-y-2 mt-4">
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition text-sm">
-                    Edit Class
-                  </button>
-                  <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition text-sm">
-                    Delete Class
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Instructor card */}
+            {instructor && (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                <h3 className="text-white font-black tracking-wide uppercase text-sm mb-4">Instructor</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-black font-black text-sm">
+                    {instructor.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-sm">{instructor.name}</p>
+                    <p className="text-zinc-500 text-xs">{instructor.style}</p>
+                  </div>
+                </div>
+                <p className="text-zinc-500 text-xs leading-relaxed">{instructor.bio}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
