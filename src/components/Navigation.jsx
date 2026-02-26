@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logo from '../assets/images/logo.png';
 
 const NAV_LINKS = [
-  { label: 'DASHBOARD', path: '/', roles: ['admin', 'instructor', 'student'] },
-  { label: 'CLASSES', path: '/classes', roles: ['admin', 'instructor', 'student'] },
-  { label: 'INSTRUCTORS', path: '/instructors', roles: ['admin', 'instructor', 'student'] },
-  { label: 'STUDENTS', path: '/students', roles: ['admin', 'instructor'] },
+  { label: 'Dashboard', path: '/', roles: ['admin', 'instructor', 'student'] },
+  { label: 'Classes', path: '/classes', roles: ['admin', 'instructor', 'student'] },
+  { label: 'Instructors', path: '/instructors', roles: ['admin', 'instructor', 'student'] },
+  { label: 'Students', path: '/students', roles: ['admin', 'instructor'] },
 ];
 
 export default function Navigation() {
@@ -24,78 +23,105 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 bg-black/95 backdrop-blur border-b border-zinc-800">
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-        {/* Logo only — no duplicate text */}
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          <img src={logo} alt="Dance Studio" className="h-10 w-10 object-contain" />
-        </Link>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {links.map(link => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`text-xs font-bold tracking-widest transition ${
-                location.pathname === link.path
-                  ? 'text-yellow-400'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+          {/* Brand — text only, no image */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 bg-gray-900 rounded flex items-center justify-center">
+              <span className="text-white text-xs font-black">DS</span>
+            </div>
+            <span className="text-gray-900 font-bold text-sm hidden sm:block">Dance Studio</span>
+          </Link>
 
-        {/* Right side */}
-        <div className="hidden md:flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-white text-xs font-bold uppercase tracking-wider">{user?.name}</p>
-            <p className="text-zinc-500 text-xs capitalize">{user?.role}</p>
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {links.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition ${
+                  location.pathname === link.path
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
+
+          {/* Right side */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 transition"
+            >
+              <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-bold text-xs">
+                {user?.name?.charAt(0)}
+              </div>
+              <span className="font-medium">{user?.name?.split(' ')[0]}</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-500 hover:text-gray-900 transition px-3 py-1.5 rounded-md hover:bg-gray-100"
+            >
+              Sign out
+            </button>
+          </div>
+
+          {/* Mobile menu button */}
           <button
-            onClick={handleLogout}
-            className="bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-black tracking-widest px-4 py-2 rounded transition uppercase"
+            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
-            Logout
+            {menuOpen ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
         </div>
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-white p-2 flex flex-col gap-1"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <span className="block w-5 h-0.5 bg-white" />
-          <span className="block w-5 h-0.5 bg-white" />
-          <span className="block w-5 h-0.5 bg-white" />
-        </button>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-zinc-900 border-t border-zinc-800 px-6 py-4 space-y-4">
+        <div className="md:hidden bg-white border-t border-gray-200 px-4 py-3 space-y-1">
           {links.map(link => (
             <Link
               key={link.path}
               to={link.path}
               onClick={() => setMenuOpen(false)}
-              className={`block text-sm font-bold tracking-widest uppercase ${
-                location.pathname === link.path ? 'text-yellow-400' : 'text-zinc-400'
+              className={`block px-3 py-2 rounded-md text-sm font-medium ${
+                location.pathname === link.path
+                  ? 'bg-gray-100 text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               {link.label}
             </Link>
           ))}
-          <div className="pt-4 border-t border-zinc-800">
-            <p className="text-white text-xs font-bold">{user?.name}</p>
-            <p className="text-zinc-500 text-xs capitalize mb-3">{user?.role}</p>
+          <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-bold text-xs">
+                {user?.name?.charAt(0)}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+              </div>
+            </div>
             <button
               onClick={handleLogout}
-              className="bg-yellow-400 text-black text-xs font-black tracking-widest px-4 py-2 rounded uppercase"
+              className="text-sm text-red-600 font-medium hover:text-red-700"
             >
-              Logout
+              Sign out
             </button>
           </div>
         </div>

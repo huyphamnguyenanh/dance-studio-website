@@ -3,107 +3,95 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClasses, getInstructors, getStudents } from '../data/store';
 
-function StatCard({ label, value, sub, accent }) {
+function StatCard({ label, value, sub, color = 'text-gray-900' }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <p className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-3">{label}</p>
-      <p className={`text-4xl font-black ${accent || 'text-white'}`}>{value}</p>
-      {sub && <p className="text-zinc-500 text-xs mt-2">{sub}</p>}
+    <div className="bg-white border border-gray-200 rounded-lg p-5">
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
-  );
-}
-
-function QuickLink({ to, label, desc }) {
-  return (
-    <Link
-      to={to}
-      className="group bg-zinc-900 border border-zinc-800 hover:border-yellow-400/50 rounded-2xl p-6 transition block"
-    >
-      <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-2 group-hover:text-yellow-400 transition">{label}</h3>
-      <p className="text-zinc-500 text-xs leading-relaxed">{desc}</p>
-      <span className="text-yellow-400 text-xs font-bold mt-4 block">View →</span>
-    </Link>
   );
 }
 
 export default function Home() {
   const { user } = useAuth();
-
   const classes = useMemo(() => getClasses(), []);
   const instructors = useMemo(() => getInstructors(), []);
   const students = useMemo(() => getStudents(), []);
 
-  const totalEnrolled = classes.reduce((sum, c) => sum + c.enrolled, 0);
   const avgAttendance = students.length
     ? Math.round(students.reduce((s, st) => s + st.attendance, 0) / students.length)
     : 0;
 
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const todayDay = days[new Date().getDay()];
   const todayClasses = classes.filter(c => c.day === todayDay);
 
+  const isAdminOrInstructor = user?.role === 'admin' || user?.role === 'instructor';
+
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="mb-10">
-          <p className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-2">{today}</p>
-          <h1 className="text-4xl font-black tracking-tight">
-            Welcome back, <span className="text-yellow-400">{user?.name?.split(' ')[0]}</span>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {user?.name?.split(' ')[0]}
           </h1>
-          <p className="text-zinc-500 mt-1 capitalize">{user?.role} · Dance Studio Management</p>
+          <p className="text-gray-500 text-sm mt-1 capitalize">{user?.role} · Dance Studio Management</p>
         </div>
 
-        {/* Stats — admin/instructor only */}
-        {(user?.role === 'admin' || user?.role === 'instructor') && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            <StatCard label="Total Classes" value={classes.length} sub="Active classes" />
-            <StatCard label="Instructors" value={instructors.length} sub="Teaching staff" accent="text-yellow-400" />
-            <StatCard label="Students" value={students.length} sub="Enrolled members" />
-            <StatCard label="Avg Attendance" value={`${avgAttendance}%`} sub="This month" accent="text-green-400" />
+        {/* Stats */}
+        {isAdminOrInstructor && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <StatCard label="Classes" value={classes.length} sub="Active" />
+            <StatCard label="Instructors" value={instructors.length} sub="Teaching staff" />
+            <StatCard label="Students" value={students.length} sub="Enrolled" />
+            <StatCard label="Avg Attendance" value={`${avgAttendance}%`} sub="This month" color="text-green-600" />
           </div>
         )}
 
-        {/* Today's classes */}
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-black tracking-wide uppercase">Today's Classes</h2>
-            <Link to="/classes" className="text-yellow-400 text-xs font-bold tracking-widest hover:text-yellow-300 transition">
-              View All →
+        {/* Today's schedule */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Today's Schedule</h2>
+            <Link to="/classes" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              View all →
             </Link>
           </div>
+
           {todayClasses.length === 0 ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-              <p className="text-zinc-500 text-sm">No classes scheduled for today</p>
+            <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-400 text-sm">No classes scheduled for today ({todayDay})</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
               {todayClasses.map(cls => {
                 const instructor = instructors.find(i => i.id === cls.instructorId);
-                const pct = Math.round((cls.enrolled / cls.capacity) * 100);
                 return (
                   <Link
                     key={cls.id}
                     to={`/classes/${cls.id}`}
-                    className="bg-zinc-900 border border-zinc-800 hover:border-zinc-600 rounded-2xl p-5 transition block group"
+                    className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-4">
+                      <div className="text-center w-14">
+                        <p className="text-sm font-semibold text-gray-900">{cls.time}</p>
+                      </div>
                       <div>
-                        <p className="text-white font-bold group-hover:text-yellow-400 transition">{cls.name}</p>
-                        <p className="text-zinc-500 text-xs mt-0.5">{instructor?.name || 'TBD'}</p>
+                        <p className="text-sm font-semibold text-gray-900">{cls.name}</p>
+                        <p className="text-xs text-gray-500">{instructor?.name || 'TBD'} · {cls.style} · {cls.level}</p>
                       </div>
-                      <span className="bg-zinc-800 text-zinc-400 text-xs px-2 py-1 rounded-full">{cls.time}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-zinc-500 text-xs">{cls.enrolled}/{cls.capacity}</span>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <span className="text-xs text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded-full">{cls.style}</span>
-                      <span className="text-xs text-zinc-600 bg-zinc-800 px-2 py-0.5 rounded-full">{cls.level}</span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs text-gray-500">{cls.enrolled}/{cls.capacity}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        cls.enrolled >= cls.capacity
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {cls.enrolled >= cls.capacity ? 'Full' : 'Open'}
+                      </span>
                     </div>
                   </Link>
                 );
@@ -113,16 +101,27 @@ export default function Home() {
         </div>
 
         {/* Quick links */}
-        <div className="mb-4">
-          <h2 className="text-lg font-black tracking-wide uppercase mb-5">Quick Access</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Access</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <QuickLink to="/classes" label="Classes" desc="Browse and manage all dance classes, schedules, and enrollment." />
-            <QuickLink to="/instructors" label="Instructors" desc="View instructor profiles, specialties, and class assignments." />
-            {(user?.role === 'admin' || user?.role === 'instructor') && (
-              <QuickLink to="/students" label="Students" desc="Manage student records, enrollment, and attendance tracking." />
-            )}
+            {[
+              { to: '/classes', label: 'Classes', desc: 'Browse and manage all dance classes and schedules.' },
+              { to: '/instructors', label: 'Instructors', desc: 'View instructor profiles and class assignments.' },
+              ...(isAdminOrInstructor ? [{ to: '/students', label: 'Students', desc: 'Manage student records and attendance.' }] : []),
+            ].map(({ to, label, desc }) => (
+              <Link
+                key={to}
+                to={to}
+                className="bg-white border border-gray-200 rounded-lg p-5 hover:border-gray-300 hover:shadow-sm transition"
+              >
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">{label}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                <p className="text-xs text-blue-600 font-medium mt-3">Go to {label} →</p>
+              </Link>
+            ))}
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logo from '../assets/images/logo.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,7 +21,7 @@ export default function Login() {
         setError('Invalid email or password. Try the demo accounts below.');
       }
       setLoading(false);
-    }, 400);
+    }, 300);
   };
 
   const demoLogin = (role) => {
@@ -36,87 +35,85 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-zinc-950 items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-zinc-900 to-black" />
-        <div className="relative z-10 text-center px-12">
-          <img src={logo} alt="Dance Studio" className="w-28 h-28 object-contain mx-auto mb-8 invert" />
-          <h1 className="text-white font-black text-6xl leading-none tracking-tighter mb-4">
-            DANCE<br />STUDIO
-          </h1>
-          <p className="text-zinc-500 text-sm tracking-widest uppercase">Management System</p>
-          <div className="mt-10 w-16 h-1 bg-yellow-400 mx-auto" />
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-zinc-950">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-10">
-            <img src={logo} alt="Dance Studio" className="w-16 h-16 object-contain mx-auto mb-4 invert" />
-            <h1 className="text-white font-black text-3xl tracking-tighter">DANCE STUDIO</h1>
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-900 rounded-xl mb-3">
+            <span className="text-white font-black text-lg">DS</span>
           </div>
+          <h1 className="text-xl font-bold text-gray-900">Dance Studio</h1>
+          <p className="text-sm text-gray-500 mt-1">Management System</p>
+        </div>
 
-          <h2 className="text-white font-black text-3xl tracking-tight mb-1">SIGN IN</h2>
-          <p className="text-zinc-500 text-sm mb-8">Access your studio management portal</p>
+        {/* Card */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <h2 className="text-base font-semibold text-gray-900 mb-5">Sign in to your account</h2>
 
           {error && (
-            <div className="bg-red-950/60 border border-red-800 text-red-300 text-sm px-4 py-3 rounded-lg mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-lg mb-4">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-xs font-bold tracking-widest uppercase mb-2">Email</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Email address</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="you@studio.com"
                 required
-                className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-yellow-400 transition placeholder-zinc-600 text-sm"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-xs font-bold tracking-widest uppercase mb-2">Password</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-yellow-400 transition placeholder-zinc-600 text-sm"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-black font-black tracking-widest uppercase py-3 rounded-lg transition text-sm"
+              className="w-full bg-gray-900 hover:bg-gray-800 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg text-sm transition"
             >
-              {loading ? 'Signing in...' : 'Sign In →'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+        </div>
 
-          {/* Demo credentials */}
-          <div className="mt-8 border-t border-zinc-800 pt-6">
-            <p className="text-zinc-600 text-xs font-bold tracking-widest uppercase mb-3">Quick Demo Access</p>
-            <div className="grid grid-cols-3 gap-2">
-              {['admin', 'instructor', 'student'].map(role => (
-                <button
-                  key={role}
-                  onClick={() => demoLogin(role)}
-                  className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-zinc-300 text-xs font-bold py-2.5 rounded-lg capitalize transition"
-                >
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-              ))}
-            </div>
-            <p className="text-zinc-700 text-xs mt-2">Password for all: <span className="text-zinc-500">password</span></p>
+        {/* Demo accounts */}
+        <div className="mt-4">
+          <p className="text-xs text-gray-500 text-center mb-2">
+            Demo accounts — password: <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-700">password</code>
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { role: 'admin', desc: 'Full access' },
+              { role: 'instructor', desc: 'Classes & students' },
+              { role: 'student', desc: 'Browse classes' },
+            ].map(({ role, desc }) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => demoLogin(role)}
+                className="bg-white border border-gray-200 rounded-lg p-2.5 text-left hover:border-gray-400 hover:bg-gray-50 transition"
+              >
+                <p className="text-xs font-semibold text-gray-900 capitalize">{role}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+              </button>
+            ))}
           </div>
         </div>
+
       </div>
     </div>
   );
