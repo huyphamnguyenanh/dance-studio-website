@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navigation from './components/Navigation';
+import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Classes from './pages/Classes';
@@ -32,21 +33,24 @@ function AppLayout() {
   }
 
   return (
-    <div className="bg-black min-h-screen">
+    <div className="bg-white min-h-screen">
       <Navigation />
-      <div className="pt-16">
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
-          <Route path="/classes/:id" element={<ProtectedRoute><ClassDetail /></ProtectedRoute>} />
-          <Route path="/instructors" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
-          <Route path="/instructors/:id" element={<ProtectedRoute><InstructorDetail /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute roles={['admin', 'instructor']}><Students /></ProtectedRoute>} />
-          <Route path="/students/:id" element={<ProtectedRoute roles={['admin', 'instructor']}><StudentDetail /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+      <div className="flex pt-32">
+        <Sidebar />
+        <main className="flex-1 ml-0 md:ml-64 bg-gray-50 min-h-screen">
+          <Routes>
+            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+            <Route path="/classes/:id" element={<ProtectedRoute><ClassDetail /></ProtectedRoute>} />
+            <Route path="/instructors" element={<ProtectedRoute><Instructors /></ProtectedRoute>} />
+            <Route path="/instructors/:id" element={<ProtectedRoute><InstructorDetail /></ProtectedRoute>} />
+            <Route path="/students" element={<ProtectedRoute roles={['admin', 'instructor']}><Students /></ProtectedRoute>} />
+            <Route path="/students/:id" element={<ProtectedRoute roles={['admin', 'instructor']}><StudentDetail /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
       </div>
     </div>
   );

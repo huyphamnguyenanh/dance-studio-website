@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClasses, addClass, deleteClass, getInstructors } from '../data/store';
 import Modal from '../components/Modal';
+import FilterPanel from '../components/FilterPanel';
 import { FormField, Input, Select, Textarea } from '../components/FormField';
 
 const STYLES = ['Ballet', 'Contemporary', 'Hip-Hop', 'Jazz', 'Salsa', 'Tap', 'Ballroom'];
@@ -16,9 +17,12 @@ export default function Classes() {
   const [instructors, setInstructors] = useState([]);
   const [search, setSearch] = useState('');
   const [filterStyle, setFilterStyle] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterDay, setFilterDay] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+  const [selectedClasses, setSelectedClasses] = useState(new Set());
   const canManage = user?.role === 'admin';
 
   useEffect(() => {
@@ -30,7 +34,9 @@ export default function Classes() {
     const q = search.toLowerCase();
     const matchSearch = c.name.toLowerCase().includes(q) || c.style.toLowerCase().includes(q);
     const matchStyle = !filterStyle || c.style === filterStyle;
-    return matchSearch && matchStyle;
+    const matchLevel = !filterLevel || c.level === filterLevel;
+    const matchDay = !filterDay || c.day === filterDay;
+    return matchSearch && matchStyle && matchLevel && matchDay;
   });
 
   const handleAdd = (e) => {
@@ -50,122 +56,184 @@ export default function Classes() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  const toggleSelectClass = (id) => {
+    const newSelected = new Set(selectedClasses);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedClasses(newSelected);
+  };
 
+  const toggleSelectAll = () => {
+    if (selectedClasses.size === filtered.length) {
+      setSelectedClasses(new Set());
+    } else {
+      setSelectedClasses(new Set(filtered.map(c => c.id)));
+    }
+  };
+
+  const filterGroups = [
+    {
+      title: 'By Level',
+      key: 'level',
+      icon: '↓',
+      options: LEVELS.map(l => ({ label: l, value: l }))
+    },
+    {
+      title: 'By Day',
+      key: 'day',
+      icon: '📅',
+      options: DAYS.map(d => ({ label: d, value: d }))
+    },
+    {
+      title: 'By Style',
+      key: 'style',
+      icon: '🎭',
+      options: STYLES.map(s => ({ label: s, value: s }))
+    }
+  ];
+
+  return (
+    <div className="flex h-full">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Classes</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{classes.length} classes available</p>
-          </div>
-          {canManage && (
-            <button
-              onClick={() => { setShowModal(true); setForm(EMPTY_FORM); setFormError(''); }}
-              className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
-            >
-              + Add Class
-            </button>
-          )}
+        <div className="bg-white border-b border-gray-200 px-6 py-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Select class session to change</h1>
+          <p className="text-sm text-gray-500">{filtered.length} of {classes.length} classes</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        {/* Search and Action Bar */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
           <input
             type="text"
-            placeholder="Search classes..."
+            placeholder="Start typing to filter..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+            className="flex-1 max-w-xs border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
           />
           <select
-            value={filterStyle}
-            onChange={e => setFilterStyle(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+            value=""
+            onChange={(e) => {}}
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="">All Styles</option>
-            {STYLES.map(s => <option key={s}>{s}</option>)}
+            <option value="">---------</option>
           </select>
+          <button className="border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+            Run
+          </button>
+          <span className="text-sm text-gray-500 ml-auto">{selectedClasses.size} of {filtered.length} selected</span>
         </div>
 
         {/* Table */}
-        {filtered.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-            <p className="text-gray-400 text-sm">No classes found</p>
-          </div>
-        ) : (
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Class</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3 hidden sm:table-cell">Schedule</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3 hidden md:table-cell">Instructor</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3 hidden lg:table-cell">Enrollment</th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3 hidden lg:table-cell">Status</th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wide px-5 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtered.map(cls => {
-                  const instructor = instructors.find(i => i.id === cls.instructorId);
-                  const isFull = cls.enrolled >= cls.capacity;
-                  return (
-                    <tr key={cls.id} className="hover:bg-gray-50 transition">
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-gray-900">{cls.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{cls.style} · {cls.level}</p>
-                      </td>
-                      <td className="px-5 py-4 hidden sm:table-cell">
-                        <p className="text-sm text-gray-700">{cls.day}</p>
-                        <p className="text-xs text-gray-500">{cls.time} · {cls.duration} min</p>
-                      </td>
-                      <td className="px-5 py-4 hidden md:table-cell">
-                        <p className="text-sm text-gray-700">{instructor?.name || '—'}</p>
-                      </td>
-                      <td className="px-5 py-4 hidden lg:table-cell">
-                        <p className="text-sm text-gray-700">{cls.enrolled}/{cls.capacity}</p>
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${isFull ? 'bg-red-500' : 'bg-green-500'}`}
-                            style={{ width: `${Math.round((cls.enrolled / cls.capacity) * 100)}%` }}
+        <div className="flex-1 overflow-auto px-6 py-6">
+          {filtered.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded p-12 text-center">
+              <p className="text-gray-400 text-sm">No classes found</p>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="w-12 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedClasses.size === filtered.length && filtered.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 text-teal-600 rounded cursor-pointer"
+                      />
+                    </th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Class Name</th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Style</th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Level</th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Schedule</th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Instructor</th>
+                    <th className="text-left text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Enrollment</th>
+                    <th className="text-right text-xs font-bold text-gray-700 uppercase tracking-wide px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map(cls => {
+                    const instructor = instructors.find(i => i.id === cls.instructorId);
+                    const isFull = cls.enrolled >= cls.capacity;
+                    return (
+                      <tr key={cls.id} className="hover:bg-gray-50 transition">
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedClasses.has(cls.id)}
+                            onChange={() => toggleSelectClass(cls.id)}
+                            className="w-4 h-4 text-teal-600 rounded cursor-pointer"
                           />
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 hidden lg:table-cell">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                        }`}>
-                          {isFull ? 'Full' : 'Open'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/classes/${cls.id}`}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-50 transition"
-                          >
-                            View
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link to={`/classes/${cls.id}`} className="text-sm font-medium text-teal-700 hover:text-teal-900 underline">
+                            {cls.name}
                           </Link>
-                          {canManage && (
-                            <button
-                              onClick={() => handleDelete(cls.id)}
-                              className="text-xs font-medium text-red-600 hover:text-red-700 px-3 py-1.5 rounded-md hover:bg-red-50 transition"
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{cls.style}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{cls.level}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{cls.day} {cls.time}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{instructor?.name || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{cls.enrolled}/{cls.capacity}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to={`/classes/${cls.id}`}
+                              className="text-xs font-medium text-teal-700 hover:text-teal-900 underline"
                             >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                              Change
+                            </Link>
+                            {canManage && (
+                              <button
+                                onClick={() => handleDelete(cls.id)}
+                                className="text-xs font-medium text-red-600 hover:text-red-900 underline"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Add Button - Bottom Right */}
+        {canManage && (
+          <div className="absolute bottom-6 right-6">
+            <button
+              onClick={() => { setShowModal(true); setForm(EMPTY_FORM); setFormError(''); }}
+              className="bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-lg"
+            >
+              + ADD CLASS SESSION
+            </button>
           </div>
         )}
       </div>
+
+      {/* Filter Panel */}
+      <FilterPanel
+        title="Filter"
+        filters={filterGroups}
+        activeFilters={{
+          level: filterLevel ? [filterLevel] : [],
+          day: filterDay ? [filterDay] : [],
+          style: filterStyle ? [filterStyle] : []
+        }}
+        onFilterChange={(key, values) => {
+          if (key === 'level') setFilterLevel(values[0] || '');
+          if (key === 'day') setFilterDay(values[0] || '');
+          if (key === 'style') setFilterStyle(values[0] || '');
+        }}
+      />
 
       {/* Add Class Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add New Class">
