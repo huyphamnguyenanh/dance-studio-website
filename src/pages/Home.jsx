@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getClasses, getInstructors, getStudents } from '../data/store';
 
-function StatCard({ label, value, sub, color = 'text-gray-900' }) {
+function StatCard({ label, value, sub }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${color}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    <div className="bg-white border border-gray-200 rounded p-4">
+      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">{label}</p>
+      <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -30,115 +30,108 @@ export default function Home() {
   const isAdminOrInstructor = user?.role === 'admin' || user?.role === 'instructor';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Site administration</h1>
+        <p className="text-gray-600 text-sm mt-2">
+          Welcome, <strong>{user?.name}</strong>. {user?.role === 'admin' ? 'You have access to all administrative functions.' : 'You have limited access based on your role.'}
+        </p>
+      </div>
 
-        {/* Page header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Site administration
-          </h1>
-          <p className="text-gray-500 text-sm mt-2">Welcome, {user?.name}. {user?.role === 'admin' ? 'You have access to all administrative functions.' : 'You have limited access based on your role.'}</p>
+      {/* Stats Grid */}
+      {isAdminOrInstructor && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Classes" value={classes.length} sub="Active" />
+          <StatCard label="Instructors" value={instructors.length} sub="Teaching staff" />
+          <StatCard label="Students" value={students.length} sub="Enrolled" />
+          <StatCard label="Avg Attendance" value={`${avgAttendance}%`} sub="This month" />
         </div>
+      )}
 
-        {/* Two column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Navigation & Stats */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Stats */}
-            {isAdminOrInstructor && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard label="Classes" value={classes.length} sub="Active" />
-                <StatCard label="Instructors" value={instructors.length} sub="Teaching staff" />
-                <StatCard label="Students" value={students.length} sub="Enrolled" />
-                <StatCard label="Avg Attendance" value={`${avgAttendance}%`} sub="This month" color="text-green-600" />
-              </div>
-            )}
+      {/* Today's Schedule */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Today's Schedule ({todayDay})</h2>
 
-            {/* Today's schedule */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Today's Schedule ({todayDay})</h2>
-                <Link to="/classes" className="text-sm text-teal-700 hover:text-teal-900 font-medium underline">
-                  View all →
-                </Link>
-              </div>
-
-              {todayClasses.length === 0 ? (
-                <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-                  <p className="text-gray-400 text-sm">No classes scheduled for today</p>
-                </div>
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
-                  {todayClasses.map(cls => {
-                    const instructor = instructors.find(i => i.id === cls.instructorId);
-                    return (
-                      <Link
-                        key={cls.id}
-                        to={`/classes/${cls.id}`}
-                        className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="text-center w-14">
-                            <p className="text-sm font-semibold text-gray-900">{cls.time}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-teal-700 underline">{cls.name}</p>
-                            <p className="text-xs text-gray-500">{instructor?.name || 'TBD'} · {cls.style} · {cls.level}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-xs text-gray-500">{cls.enrolled}/{cls.capacity}</span>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            cls.enrolled >= cls.capacity
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-green-100 text-green-700'
-                          }`}>
-                            {cls.enrolled >= cls.capacity ? 'Full' : 'Open'}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+        {todayClasses.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded p-6 text-center">
+            <p className="text-gray-500 text-sm">No classes scheduled for today</p>
           </div>
-
-          {/* Right column - Recent Actions */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">My actions</h2>
-            <div className="space-y-3 text-sm">
-              {classes.slice(0, 3).map(cls => (
-                <Link
-                  key={cls.id}
-                  to={`/classes/${cls.id}`}
-                  className="flex items-start gap-2 text-teal-700 hover:text-teal-900 transition"
-                >
-                  <span className="text-green-600 font-bold">+</span>
-                  <div>
-                    <p className="underline">{cls.name}</p>
-                    <p className="text-xs text-gray-500">Class</p>
-                  </div>
-                </Link>
-              ))}
-              {instructors.slice(0, 2).map(instr => (
-                <Link
-                  key={instr.id}
-                  to={`/instructors/${instr.id}`}
-                  className="flex items-start gap-2 text-teal-700 hover:text-teal-900 transition"
-                >
-                  <span className="text-green-600 font-bold">+</span>
-                  <div>
-                    <p className="underline">{instr.name}</p>
-                    <p className="text-xs text-gray-500">Instructor</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+        ) : (
+          <div className="bg-white border border-gray-200 rounded overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Time</th>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Class</th>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Instructor</th>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Style</th>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Enrollment</th>
+                  <th className="text-left text-xs font-bold text-gray-700 uppercase px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {todayClasses.map(cls => {
+                  const instructor = instructors.find(i => i.id === cls.instructorId);
+                  const isFull = cls.enrolled >= cls.capacity;
+                  return (
+                    <tr key={cls.id} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{cls.time}</td>
+                      <td className="px-4 py-3">
+                        <Link to={`/classes/${cls.id}`} className="text-sm font-medium text-teal-700 hover:text-teal-900 underline">
+                          {cls.name}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{instructor?.name || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{cls.style}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{cls.enrolled}/{cls.capacity}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${
+                          isFull ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {isFull ? 'Full' : 'Open'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        )}
+      </div>
+
+      {/* Quick Links */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Access</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link
+            to="/classes"
+            className="bg-white border border-gray-200 rounded p-4 hover:shadow-md transition"
+          >
+            <h3 className="text-sm font-bold text-gray-900">Classes</h3>
+            <p className="text-xs text-gray-600 mt-1">Browse and manage all dance classes and schedules.</p>
+            <p className="text-xs text-teal-700 font-medium mt-3 underline">Go to Classes →</p>
+          </Link>
+          <Link
+            to="/instructors"
+            className="bg-white border border-gray-200 rounded p-4 hover:shadow-md transition"
+          >
+            <h3 className="text-sm font-bold text-gray-900">Instructors</h3>
+            <p className="text-xs text-gray-600 mt-1">View instructor profiles and class assignments.</p>
+            <p className="text-xs text-teal-700 font-medium mt-3 underline">Go to Instructors →</p>
+          </Link>
+          {isAdminOrInstructor && (
+            <Link
+              to="/students"
+              className="bg-white border border-gray-200 rounded p-4 hover:shadow-md transition"
+            >
+              <h3 className="text-sm font-bold text-gray-900">Students</h3>
+              <p className="text-xs text-gray-600 mt-1">Manage student records and attendance.</p>
+              <p className="text-xs text-teal-700 font-medium mt-3 underline">Go to Students →</p>
+            </Link>
+          )}
         </div>
-
       </div>
     </div>
   );
